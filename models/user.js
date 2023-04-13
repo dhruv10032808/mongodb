@@ -27,6 +27,30 @@ class User{
     const db=getDb();
     return db.collection('users').updateOne({_id:new mongodb.ObjectId(this._id)},{$set:{cart:updatedCart}})
   }
+
+  deleteItemFromCart(productId){
+    const updatedCartItems=this.cart.items.filter(i=>{
+      return i.productId.toString()!=productId.toString()
+    })
+    const db=getDb();
+    return db.collection('users').updateOne({_id:new mongodb.ObjectId(this._id)},{$set:{cart:{items:updatedCartItems}}})
+  }
+
+  getCart(){
+    const db=getDb();
+    const productIds=this.cart.items.map(item=>{
+      return item.productId;
+    })
+    return db.collection('products').find({_id:{$in:productIds}}).toArray().then(products=>{
+      return products.map(product=>{
+        return {...product,
+                quantity:this.cart.items.find(i=>{
+                  return i.productId.toString()===product._id.toString()
+                }).quantity}
+      })
+    })
+  }
+
   static findById(userId){
     const db=getDb();
     return db.collection('users').findOne({_id:new mongodb.ObjectId(userId)}).then(user=>{
